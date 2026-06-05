@@ -14,7 +14,7 @@ const btnMenu = document.getElementById('btn-menu');
 let invoiceItems = []; // Store multiple items
 
 // Add initial item row - REMOVED TO PREVENT DUPLICATE
-// addItemRow();
+addItemRow();
 
 addItemBtn.addEventListener('click', addItemRow);
 
