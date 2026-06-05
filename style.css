@@ -8,7 +8,7 @@
 
 body {
     background-color: #f4f6f9;
-    padding: 30px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -20,13 +20,14 @@ body {
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     width: 100%;
-    max-width: 600px;
+    max-width: 700px;
     margin-bottom: 20px;
 }
 
 h2 {
     margin-bottom: 20px;
     color: #333;
+    text-align: center;
 }
 
 /* Form Styles */
@@ -67,95 +68,135 @@ h2 {
 .btn-success:hover { background-color: #218838; }
 .btn-secondary { background-color: #6c757d; color: white; }
 .btn-secondary:hover { background-color: #5a6268; }
+.btn-info { background-color: #17a2b8; color: white; }
+.btn-info:hover { background-color: #138496; }
+
+/* New button for removing items */
+.btn-remove-item {
+    background-color: #dc3545;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+.btn-remove-item:hover {
+    background-color: #c82333;
+}
 
 /* Control Helpers */
 .hidden { display: none !important; }
 
-/* INVOICE DESIGN (Matching your layout picture) */
+/* INVOICE DESIGN */
 .invoice-box {
     background: #ffffff;
-    width: 210mm; /* standard A4 width */
-    min-height: 297mm; /* standard A4 height */
+    width: 210mm;
+    min-height: 297mm;
     padding: 20mm;
     margin: 0 auto;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    color: #000;
+    color: #333;
+    font-size: 11pt;
+    border-left: 5px solid #ff6347; /* Vibrant color: Tomato */
 }
 
 .invoice-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
     margin-bottom: 40px;
-    border-bottom: 2px solid #333;
+    border-bottom: 2px solid #6a5acd; /* Vibrant color: SlateBlue */
     padding-bottom: 20px;
 }
 
 .title-block h1 {
-    font-size: 36px;
-    letter-spacing: 2px;
-    color: #2c3e50;
+    font-size: 38px;
+    letter-spacing: 1px;
+    color: #6a5acd; /* Vibrant color: SlateBlue */
+    margin-bottom: 10px;
 }
 
-.meta-block p {
-    font-size: 14px;
-    line-height: 1.6;
+.meta-block {
     text-align: right;
+    line-height: 1.6;
+}
+.meta-block p {
+    margin-bottom: 5px;
+}
+.meta-block strong {
+    color: #555;
+    min-width: 90px;
+    display: inline-block;
 }
 
-/* Table Design matching standard Excel spreadsheet styles */
+.recipient-block {
+    line-height: 1.5;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    grid-column: 1 / -1; /* Span across both columns */
+}
+.recipient-block h3 {
+    font-size: 16px;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+.recipient-block p {
+    margin-bottom: 2px;
+    color: #555; /* Added color */
+}
+
+/* Table Design */
 .invoice-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 50px;
+    margin-bottom: 40px;
+    table-layout: fixed;
+}
+
+.invoice-table th,
+.invoice-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    font-size: 11pt;
+    vertical-align: top;
 }
 
 .invoice-table th {
-    background-color: #f2f2f2;
-    border: 1px solid #bdc3c7;
-    padding: 12px 10px;
-    font-size: 14px;
+    background-color: #add8e6; /* Vibrant color: LightBlue */
     font-weight: bold;
-    color: #333;
+    color: #000080; /* Vibrant color: Navy */
+    text-align: left;
 }
 
-.invoice-table td {
-    border: 1px solid #bdc3c7;
-    padding: 12px 10px;
-    font-size: 14px;
-    height: 45px; /* Consistent row heights like Excel */
-}
-
-/* Column Width Percentages */
-.col-desc { width: 55%; }
-.col-qty { width: 10%; }
-.col-rate { width: 15%; }
-.col-amount { width: 20%; }
+/* Specific column alignments for data */
+.invoice-table .col-desc { text-align: left; width: 50%; } /* Adjusted width for more space */
+.invoice-table .col-qty { text-align: center; width: 10%; }
+.invoice-table .col-rate { text-align: right; width: 20%; }
+.invoice-table .col-amount { text-align: right; width: 20%; }
 
 /* Utility Alignment Classes */
 .text-left { text-align: left; }
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 .font-bold { font-weight: bold; }
-.empty-cell { height: 45px; }
+.empty-cell { height: 35px; }
 
 /* Totals Row Styles */
 .no-border { border: none !important; }
 .total-label {
-    border: 1px solid #bdc3c7 !important;
+    border: 1px solid #ddd !important;
     font-weight: bold;
-    background-color: #f9f9f9;
+    background-color: #f0f8ff; /* Vibrant color: AliceBlue */
     text-align: right;
+    padding: 10px;
+    color: #333; /* Added color */
 }
 .total-amount {
-    border: 1px solid #bdc3c7 !important;
+    border: 1px solid #ddd !important;
     font-weight: bold;
-    background-color: #eaf2f8;
-}
-
-.invoice-footer {
-    text-align: center;
-    margin-top: 60px;
-    font-style: italic;
-    color: #7f8c8d;
+    background-color: #b0e0e6; /* Vibrant color: PowderBlue */
+    padding: 10px;
+    color: #000080; /* Vibrant color: Navy */
 }
