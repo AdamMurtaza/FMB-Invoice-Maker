@@ -1,1 +1,161 @@
+/* Reset & Base Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 
+body {
+    background-color: #f4f6f9;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.card {
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 600px;
+    margin-bottom: 20px;
+}
+
+h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+/* Button Styles */
+.btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: background 0.2s;
+}
+
+.btn-primary { background-color: #007bff; color: white; }
+.btn-primary:hover { background-color: #0056b3; }
+.btn-success { background-color: #28a745; color: white; }
+.btn-success:hover { background-color: #218838; }
+.btn-secondary { background-color: #6c757d; color: white; }
+.btn-secondary:hover { background-color: #5a6268; }
+
+/* Control Helpers */
+.hidden { display: none !important; }
+
+/* INVOICE DESIGN (Matching your layout picture) */
+.invoice-box {
+    background: #ffffff;
+    width: 210mm; /* standard A4 width */
+    min-height: 297mm; /* standard A4 height */
+    padding: 20mm;
+    margin: 0 auto;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    color: #000;
+}
+
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 20px;
+}
+
+.title-block h1 {
+    font-size: 36px;
+    letter-spacing: 2px;
+    color: #2c3e50;
+}
+
+.meta-block p {
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: right;
+}
+
+/* Table Design matching standard Excel spreadsheet styles */
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 50px;
+}
+
+.invoice-table th {
+    background-color: #f2f2f2;
+    border: 1px solid #bdc3c7;
+    padding: 12px 10px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+.invoice-table td {
+    border: 1px solid #bdc3c7;
+    padding: 12px 10px;
+    font-size: 14px;
+    height: 45px; /* Consistent row heights like Excel */
+}
+
+/* Column Width Percentages */
+.col-desc { width: 55%; }
+.col-qty { width: 10%; }
+.col-rate { width: 15%; }
+.col-amount { width: 20%; }
+
+/* Utility Alignment Classes */
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.font-bold { font-weight: bold; }
+.empty-cell { height: 45px; }
+
+/* Totals Row Styles */
+.no-border { border: none !important; }
+.total-label {
+    border: 1px solid #bdc3c7 !important;
+    font-weight: bold;
+    background-color: #f9f9f9;
+    text-align: right;
+}
+.total-amount {
+    border: 1px solid #bdc3c7 !important;
+    font-weight: bold;
+    background-color: #eaf2f8;
+}
+
+.invoice-footer {
+    text-align: center;
+    margin-top: 60px;
+    font-style: italic;
+    color: #7f8c8d;
+}
