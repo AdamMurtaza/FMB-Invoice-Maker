@@ -6,15 +6,12 @@ const invoiceWrapper = document.getElementById('invoice-wrapper');
 const itemInputsContainer = document.getElementById('item-inputs-container');
 const addItemBtn = document.getElementById('add-item-btn');
 
-// PDF & Excel Button Event Listeners
+// PDF & CSV Button Event Listeners
 const btnDownload = document.getElementById('btn-download');
-const btnDownloadExcel = document.getElementById('btn-download-excel');
+const btnDownloadCsv = document.getElementById('btn-download-csv');
 const btnMenu = document.getElementById('btn-menu');
 
 let invoiceItems = []; // Store multiple items
-
-// Add initial item row - REMOVED TO PREVENT DUPLICATE
-addItemRow();
 
 addItemBtn.addEventListener('click', addItemRow);
 
@@ -39,7 +36,12 @@ function addItemRow() {
     itemInputsContainer.appendChild(itemRowDiv);
 
     itemRowDiv.querySelector('.btn-remove-item').addEventListener('click', function() {
-        itemInputsContainer.removeChild(itemRowDiv);
+        // Ensure at least one row always remains
+        if (document.querySelectorAll('.item-row').length > 1) {
+            itemInputsContainer.removeChild(itemRowDiv);
+        } else {
+            alert("An invoice must have at least one item.");
+        }
     });
 }
 
@@ -95,19 +97,21 @@ invoiceForm.addEventListener('submit', function(e) {
 btnDownload.addEventListener('click', function() {
     const element = document.getElementById('invoice-capture');
 
+    // Fixed pixelation with scale: 3 and handled page breaks explicitly to prevent the second blank page
     const options = {
         margin:       0,
         filename:     `Invoice_${document.getElementById('inv-date').innerText.replace(/\//g, '-')}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        image:        { type: 'jpeg', quality: 1.0 },
+        html2canvas:  { scale: 3, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['avoid-all', 'css'] }
     };
 
     html2pdf().set(options).from(element).save();
 });
 
-// Download Excel Action Logic
-btnDownloadExcel.addEventListener('click', function() {
+// Download CSV Action Logic
+btnDownloadCsv.addEventListener('click', function() {
     if (invoiceItems.length === 0) {
         alert('Please generate an invoice first.');
         return;
@@ -119,12 +123,13 @@ btnDownloadExcel.addEventListener('click', function() {
     const invoiceDate = formatDate(document.getElementById('input-date').value);
 
     invoiceItems.forEach(item => {
+        // Escaped description with quotes to preserve spacing or characters smoothly in CSV
         const data = [
             invoiceDate,
-            item.item,
+            `"${item.item}"`,
             item.quantity,
-            item.rate.toFixed(0), // Format rate to 0 decimal places
-            item.amount.toFixed(0) // Format amount to 0 decimal places
+            item.rate.toFixed(0), 
+            item.amount.toFixed(0) 
         ];
         csvRows.push(data.join(','));
     });
@@ -133,7 +138,7 @@ btnDownloadExcel.addEventListener('click', function() {
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', `Invoice_${document.getElementById('inv-date').innerText.replace(/\//g, '-')}.xlsx`);
+    link.setAttribute('download', `Invoice_${document.getElementById('inv-date').innerText.replace(/\//g, '-')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -156,3 +161,6 @@ function formatDate(dateString) {
     const parts = dateString.split('-');
     return `${parts[1]}/${parts[2]}/${parts[0]}`;
 }
+
+// FORCE ONE ROW TO APPEAR IMMEDIATELY ON LOAD
+addItemRow();
