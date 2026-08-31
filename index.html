@@ -2,115 +2,66 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Simple Invoice Generator for small businesses">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Animated Background -->
-    <div class="background-animation">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-        <div class="ribbon ribbon-1"></div>
-        <div class="ribbon ribbon-2"></div>
+    <div id="form-container" class="card">
+        <h2>Generate Invoice</h2>
+        <form id="invoice-form">
+            <div class="form-group">
+                <label for="input-date">Date:</label>
+                <input type="date" id="input-date" required>
+            </div>
+            <div id="item-inputs-container"></div>
+
+            <button type="button" id="add-item-btn" class="btn btn-secondary">Add Another Item</button>
+            <button type="submit" class="btn btn-primary">Submit & Preview</button>
+        </form>
     </div>
-
-    <div class="container">
-        <!-- Form Section -->
-        <div id="form-container" class="card card-form">
-            <div class="card-header">
-                <h1>📄 Invoice Generator</h1>
-                <p class="subtitle">Create professional invoices easily</p>
-            </div>
-            
-            <form id="invoice-form" class="form-content">
-                <div class="form-group">
-                    <label for="input-date">Invoice Date *</label>
-                    <input type="date" id="input-date" required>
-                    <small class="help-text">Today's date by default</small>
+    <div id="action-buttons" class="card hidden">
+        <button id="btn-download" class="btn btn-success">Download PDF</button>
+        <button id="btn-download-csv" class="btn btn-info">Download CSV</button>
+        <button id="btn-menu" class="btn btn-secondary">Return to Menu</button>
+    </div>
+    <div id="invoice-wrapper" class="hidden">
+        <div id="invoice-capture" class="invoice-box">
+            <div class="invoice-header">
+                <div class="title-block">
+                    <h1>INVOICE</h1>
                 </div>
-
-                <div class="form-divider"></div>
-
-                <div class="items-section">
-                    <h3 class="section-title">Invoice Items</h3>
-                    <div id="item-inputs-container" class="items-container"></div>
+                <div class="meta-block">
+                    <p><strong>DATE:</strong> <span id="inv-date"></span></p>
                 </div>
-
-                <div class="form-actions">
-                    <button type="button" id="add-item-btn" class="btn btn-secondary">+ Add Item</button>
-                    <button type="submit" class="btn btn-primary">✓ Preview Invoice</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Action Buttons -->
-        <div id="action-buttons" class="card card-actions hidden">
-            <div class="actions-grid">
-                <button id="btn-download" class="btn btn-success btn-large">
-                    <span class="btn-icon">⬇</span> Download PDF
-                </button>
-                <button id="btn-download-csv" class="btn btn-info btn-large">
-                    <span class="btn-icon">📊</span> Download CSV
-                </button>
-                <button id="btn-menu" class="btn btn-secondary btn-large">
-                    <span class="btn-icon">↩</span> New Invoice
-                </button>
-            </div>
-        </div>
-
-        <!-- Invoice Preview -->
-        <div id="invoice-wrapper" class="invoice-wrapper hidden">
-            <div class="preview-header">
-                <h3>Invoice Preview</h3>
-                <p class="preview-hint">📱 Scroll to see full invoice</p>
-            </div>
-            
-            <div id="invoice-capture" class="invoice-box">
-                <div class="invoice-header">
-                    <div class="title-block">
-                        <h1>INVOICE</h1>
-                    </div>
-                    <div class="meta-block">
-                        <p><strong>DATE:</strong> <span id="inv-date" class="date-value"></span></p>
-                    </div>
-                    <div class="recipient-block">
-                        <h3>Bill To:</h3>
-                        <p><span id="inv-customer-name" class="font-bold">Faiz-ul Mawaid-ul Burhaniyah</span></p>
-                        <p><span id="inv-customer-address">Pakistan, Karachi, Taheri Mohallah</span></p>
-                    </div>
-                </div>
-
-                <table class="invoice-table">
-                    <thead>
-                        <tr>
-                            <th class="col-desc">DESCRIPTION</th>
-                            <th class="col-qty">QTY</th>
-                            <th class="col-rate">RATE</th>
-                            <th class="col-amount">AMOUNT</th>
-                        </tr>
-                    </thead>
-                    <tbody id="invoice-table-body"></tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="2" class="no-border"></td>
-                            <td class="total-label">TOTAL</td>
-                            <td id="inv-total" class="total-amount text-right"></td>
-                        </tr>
-                    </tfoot>
-                </table>
-
-                <div class="invoice-footer">
-                    <p class="footer-text">Thank you for your business!</p>
+                <div class="recipient-block">
+                    <h3>Bill To:</h3>
+                    <p><span id="inv-customer-name" class="font-bold">Faiz-ul Mawaid-ul Burhaniyah</span></p>
+                    <p><span id="inv-customer-address">Pakistan, Karachi, Taheri Mohallah</span></p>
                 </div>
             </div>
+            <table class="invoice-table">
+                <thead>
+                    <tr>
+                        <th class="col-desc">DESCRIPTION</th>
+                        <th class="col-qty">QTY</th>
+                        <th class="col-rate">RATE</th>
+                        <th class="col-amount">AMOUNT</th>
+                    </tr>
+                </thead>
+                <tbody id="invoice-table-body">
+                    </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2" class="no-border"></td>
+                        <td class="total-label">TOTAL</td>
+                        <td id="inv-total" class="total-amount text-right"></td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
