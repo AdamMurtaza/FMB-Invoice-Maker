@@ -321,7 +321,7 @@ function escapeHtml(text) {
 }
 
 // ============================================
-// PDF DOWNLOAD
+// PDF DOWNLOAD (FIXED OVERLAPPING)
 // ============================================
 
 btnDownload.addEventListener('click', downloadPDF);
@@ -340,19 +340,37 @@ function downloadPDF() {
         const element = document.getElementById('invoice-capture');
         const filename = `Invoice_${sanitizeFilename(currentInvoiceDate)}.pdf`;
 
-        // Enhanced options for better PDF quality
+        // Enhanced options for better PDF quality & zero overlap
         const options = {
-            margin: 0,
+            margin: [10, 10, 10, 10],
             filename: filename,
             image: { 
                 type: 'jpeg', 
-                quality: 1.0 
+                quality: 0.98 
             },
             html2canvas: { 
-                scale: 3,
+                scale: 2,
                 useCORS: true,
                 logging: false,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                scrollX: 0,
+                scrollY: 0,
+                onclone: (clonedDoc) => {
+                    const clonedElement = clonedDoc.getElementById('invoice-capture');
+                    if (clonedElement) {
+                        clonedElement.style.transform = 'none';
+                        clonedElement.style.margin = '0';
+                        clonedElement.style.boxShadow = 'none';
+                        
+                        const animatedElements = clonedElement.querySelectorAll('*');
+                        animatedElements.forEach(el => {
+                            el.style.animation = 'none';
+                            el.style.transition = 'none';
+                            el.style.backdropFilter = 'none';
+                            el.style.filter = 'none';
+                        });
+                    }
+                }
             },
             jsPDF: { 
                 unit: 'mm', 
