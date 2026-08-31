@@ -1,7 +1,4 @@
-// ============================================
-// DOM ELEMENT SELECTORS
-// ============================================
-
+// Dom Element Elements
 const invoiceForm = document.getElementById('invoice-form');
 const formContainer = document.getElementById('form-container');
 const actionButtons = document.getElementById('action-buttons');
@@ -14,545 +11,156 @@ const btnDownload = document.getElementById('btn-download');
 const btnDownloadCsv = document.getElementById('btn-download-csv');
 const btnMenu = document.getElementById('btn-menu');
 
-const inputDateField = document.getElementById('input-date');
-
-// ============================================
-// STATE MANAGEMENT
-// ============================================
-
-let invoiceItems = [];
-let currentInvoiceDate = '';
-
-// ============================================
-// INITIALIZATION
-// ============================================
-
-// Set today's date as default
-function setDefaultDate() {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    inputDateField.value = `${year}-${month}-${day}`;
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    setDefaultDate();
-    addItemRow();
-});
-
-// ============================================
-// DATE HANDLING (FIXED)
-// ============================================
-
-/**
- * Format date from YYYY-MM-DD to MM/DD/YYYY
- * This fixes the date bug by properly handling the date conversion
- */
-function formatDate(dateString) {
-    if (!dateString || dateString.trim() === '') {
-        return new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
-    }
-
-    try {
-        // Parse the date string
-        const [year, month, day] = dateString.split('-');
-        
-        // Validate that we have all parts
-        if (!year || !month || !day) {
-            throw new Error('Invalid date format');
-        }
-        
-        // Validate date values
-        const parsedMonth = parseInt(month, 10);
-        const parsedDay = parseInt(day, 10);
-        const parsedYear = parseInt(year, 10);
-        
-        if (parsedMonth < 1 || parsedMonth > 12 || parsedDay < 1 || parsedDay > 31) {
-            throw new Error('Invalid date values');
-        }
-        
-        // Create date object to validate
-        const dateObj = new Date(parsedYear, parsedMonth - 1, parsedDay);
-        
-        // Format as MM/DD/YYYY
-        const formattedMonth = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const formattedDay = String(dateObj.getDate()).padStart(2, '0');
-        const formattedYear = dateObj.getFullYear();
-        
-        return `${formattedMonth}/${formattedDay}/${formattedYear}`;
-    } catch (error) {
-        console.error('Date formatting error:', error);
-        return new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
-    }
-}
-
-/**
- * Sanitize filename to remove special characters
- */
-function sanitizeFilename(filename) {
-    return filename.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_');
-}
-
-// ============================================
-// ITEM ROW MANAGEMENT
-// ============================================
+let invoiceItems = []; // Store multiple items
 
 addItemBtn.addEventListener('click', addItemRow);
 
 function addItemRow() {
     const itemRowDiv = document.createElement('div');
     itemRowDiv.classList.add('item-row');
-    
-    const itemId = Date.now(); // Unique ID for this row
-    
     itemRowDiv.innerHTML = `
         <div class="form-group">
-            <label>Item Description *</label>
-            <input type="text" class="input-item" placeholder="e.g., Web Development" required>
+            <label>Item Description:</label>
+            <input type="text" class="input-item" placeholder="e.g., Web Development Services" required>
         </div>
         <div class="form-group">
-            <label>Quantity *</label>
-            <input type="number" class="input-qty" min="1" step="0.01" placeholder="1" value="1" required>
+            <label>Quantity:</label>
+            <input type="number" class="input-qty" min="1" step="any" placeholder="0" required>
         </div>
         <div class="form-group">
-            <label>Rate (PKR) *</label>
-            <input type="number" class="input-rate" min="0" step="0.01" placeholder="0" required>
+            <label>Rate (PKR):</label>
+            <input type="number" class="input-rate" min="0" step="any" placeholder="0" required>
         </div>
-        <button type="button" class="btn-remove-item" aria-label="Remove this item">✕</button>
+        <button type="button" class="btn-remove-item">Remove</button>
     `;
-    
     itemInputsContainer.appendChild(itemRowDiv);
 
-    // Remove button event listener
-    itemRowDiv.querySelector('.btn-remove-item').addEventListener('click', function(e) {
-        e.preventDefault();
-        const totalRows = document.querySelectorAll('.item-row').length;
-        
-        if (totalRows > 1) {
-            itemRowDiv.style.animation = 'slideInUp 0.3s ease-out reverse';
-            setTimeout(() => {
-                itemInputsContainer.removeChild(itemRowDiv);
-            }, 300);
+    itemRowDiv.querySelector('.btn-remove-item').addEventListener('click', function() {
+        // Ensure at least one row always remains
+        if (document.querySelectorAll('.item-row').length > 1) {
+            itemInputsContainer.removeChild(itemRowDiv);
         } else {
-            alert('❗ An invoice must have at least one item.');
+            alert("An invoice must have at least one item.");
         }
     });
-
-    // Animate new row
-    itemRowDiv.style.animation = 'slideInUp 0.3s ease-out';
 }
 
-// ============================================
-// FORM SUBMISSION & INVOICE GENERATION
-// ============================================
-
+// Form Submitting Engine
 invoiceForm.addEventListener('submit', function(e) {
-    e.preventDefault();
+    e.preventDefault(); // Stop standard page refreshing
 
-    // Reset state
     invoiceItems = [];
     let totalAmount = 0;
-    let hasError = false;
 
-    // Get the date
-    const dateValue = inputDateField.value;
-    if (!dateValue) {
-        alert('❗ Please select a date.');
-        return;
-    }
-
-    currentInvoiceDate = formatDate(dateValue);
-
-    // Collect items
     const itemRows = document.querySelectorAll('.item-row');
-    
-    if (itemRows.length === 0) {
-        alert('❗ Please add at least one item.');
-        return;
-    }
+    itemRows.forEach(row => {
+        const itemVal = row.querySelector('.input-item').value;
+        const qtyVal = parseFloat(row.querySelector('.input-qty').value);
+        const rateVal = parseFloat(row.querySelector('.input-rate').value);
 
-    itemRows.forEach((row, index) => {
-        try {
-            const itemVal = row.querySelector('.input-item').value.trim();
-            const qtyVal = parseFloat(row.querySelector('.input-qty').value) || 0;
-            const rateVal = parseFloat(row.querySelector('.input-rate').value) || 0;
+        const calculatedAmount = qtyVal * rateVal;
+        totalAmount += calculatedAmount;
 
-            // Validate
-            if (!itemVal) {
-                alert(`❗ Item ${index + 1}: Please enter a description.`);
-                hasError = true;
-                return;
-            }
-
-            if (qtyVal <= 0) {
-                alert(`❗ Item ${index + 1}: Quantity must be greater than 0.`);
-                hasError = true;
-                return;
-            }
-
-            if (rateVal < 0) {
-                alert(`❗ Item ${index + 1}: Rate cannot be negative.`);
-                hasError = true;
-                return;
-            }
-
-            const calculatedAmount = qtyVal * rateVal;
-            totalAmount += calculatedAmount;
-
-            invoiceItems.push({
-                item: itemVal,
-                quantity: qtyVal,
-                rate: rateVal,
-                amount: calculatedAmount
-            });
-        } catch (error) {
-            console.error('Error processing item:', error);
-            alert(`❗ Error processing item ${index + 1}. Please check your input.`);
-            hasError = true;
-        }
+        invoiceItems.push({
+            item: itemVal,
+            quantity: qtyVal,
+            rate: rateVal,
+            amount: calculatedAmount
+        });
     });
 
-    if (hasError) return;
+    // Inject data inside preview spreadsheet slots
+    document.getElementById('inv-date').innerText = formatDate(document.getElementById('input-date').value);
 
-    // Update invoice preview
-    updateInvoicePreview(totalAmount);
-
-    // Show preview and action buttons
-    formContainer.classList.add('hidden');
-    actionButtons.classList.remove('hidden');
-    invoiceWrapper.classList.remove('hidden');
-
-    // Scroll to preview (smooth scroll for better UX)
-    setTimeout(() => {
-        invoiceWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
-});
-
-/**
- * Update the invoice preview with current data
- */
-function updateInvoicePreview(totalAmount) {
-    // Update date display
-    const dateSpan = document.getElementById('inv-date');
-    dateSpan.textContent = currentInvoiceDate;
-
-    // Update invoice table
     const invoiceTableBody = document.getElementById('invoice-table-body');
-    invoiceTableBody.innerHTML = '';
+    invoiceTableBody.innerHTML = ''; // Clear previous items
 
-    invoiceItems.forEach((item, index) => {
+    invoiceItems.forEach(item => {
         const row = invoiceTableBody.insertRow();
-        row.style.animation = `slideInUp 0.3s ease-out ${index * 0.05}s both`;
-        
-        const formattedRate = formatCurrency(item.rate);
-        const formattedAmount = formatCurrency(item.amount);
-
         row.innerHTML = `
-            <td class="text-left col-desc">${escapeHtml(item.item)}</td>
-            <td class="text-center col-qty">${formatNumber(item.quantity)}</td>
-            <td class="text-right col-rate">${formattedRate}</td>
-            <td class="text-right font-bold col-amount">${formattedAmount}</td>
+            <td class="text-left col-desc">${item.item}</td>
+            <td class="text-center col-qty">${item.quantity}</td>
+            <td class="text-right col-rate">${'PKR ' + item.rate.toLocaleString('en-PK', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>
+            <td class="text-right font-bold col-amount">${'PKR ' + item.amount.toLocaleString('en-PK', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>
         `;
     });
 
-    // Update total
-    const totalSpan = document.getElementById('inv-total');
-    totalSpan.textContent = formatCurrency(totalAmount);
-}
+    document.getElementById('inv-total').innerText = 'PKR ' + totalAmount.toLocaleString('en-PK', {minimumFractionDigits: 0, maximumFractionDigits: 0});
 
-// ============================================
-// NUMBER & CURRENCY FORMATTING
-// ============================================
+    // Adjust visibility screens
+    formContainer.classList.add('hidden');
+    actionButtons.classList.remove('hidden');
+    invoiceWrapper.classList.remove('hidden');
+});
 
-/**
- * Format number for display (handles decimals properly)
- */
-function formatNumber(num) {
-    if (typeof num !== 'number') {
-        num = parseFloat(num) || 0;
-    }
-    
-    // Show decimals only if necessary
-    if (Number.isInteger(num)) {
-        return num.toLocaleString('en-PK');
-    }
-    return num.toLocaleString('en-PK', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-    });
-}
+// Download PDF Action Logic
+btnDownload.addEventListener('click', function() {
+    const element = document.getElementById('invoice-capture');
 
-/**
- * Format as Pakistani currency (PKR)
- */
-function formatCurrency(amount) {
-    if (typeof amount !== 'number') {
-        amount = parseFloat(amount) || 0;
-    }
-    
-    return 'PKR ' + amount.toLocaleString('en-PK', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2
-    });
-}
-
-/**
- * Escape HTML to prevent XSS
- */
-function escapeHtml(text) {
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
+    // Fixed pixelation with scale: 3 and handled page breaks explicitly to prevent the second blank page
+    const options = {
+        margin:       0,
+        filename:     `Invoice_${document.getElementById('inv-date').innerText.replace(/\//g, '-')}.pdf`,
+        image:        { type: 'jpeg', quality: 1.0 },
+        html2canvas:  { scale: 3, useCORS: true, logging: false },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak:    { mode: ['avoid-all', 'css'] }
     };
-    return text.replace(/[&<>"']/g, m => map[m]);
-}
 
-// ============================================
-// PDF DOWNLOAD (FIXED OVERLAPPING)
-// ============================================
+    html2pdf().set(options).from(element).save();
+});
 
-btnDownload.addEventListener('click', downloadPDF);
-
-function downloadPDF() {
-    try {
-        if (invoiceItems.length === 0) {
-            alert('❗ No invoice to download. Please generate one first.');
-            return;
-        }
-
-        // Disable button during download
-        btnDownload.disabled = true;
-        btnDownload.textContent = '⏳ Generating...';
-
-        const element = document.getElementById('invoice-capture');
-        const filename = `Invoice_${sanitizeFilename(currentInvoiceDate)}.pdf`;
-
-        // Enhanced options for better PDF quality & zero overlap
-        const options = {
-            margin: [10, 10, 10, 10],
-            filename: filename,
-            image: { 
-                type: 'jpeg', 
-                quality: 0.98 
-            },
-            html2canvas: { 
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff',
-                scrollX: 0,
-                scrollY: 0,
-                onclone: (clonedDoc) => {
-                    const clonedElement = clonedDoc.getElementById('invoice-capture');
-                    if (clonedElement) {
-                        clonedElement.style.transform = 'none';
-                        clonedElement.style.margin = '0';
-                        clonedElement.style.boxShadow = 'none';
-                        
-                        const animatedElements = clonedElement.querySelectorAll('*');
-                        animatedElements.forEach(el => {
-                            el.style.animation = 'none';
-                            el.style.transition = 'none';
-                            el.style.backdropFilter = 'none';
-                            el.style.filter = 'none';
-                        });
-                    }
-                }
-            },
-            jsPDF: { 
-                unit: 'mm', 
-                format: 'a4', 
-                orientation: 'portrait',
-                compress: true
-            },
-            pagebreak: { 
-                mode: ['avoid-all', 'css'] 
-            }
-        };
-
-        // Generate and save PDF
-        html2pdf()
-            .set(options)
-            .from(element)
-            .save()
-            .then(() => {
-                btnDownload.disabled = false;
-                btnDownload.innerHTML = '<span class="btn-icon">⬇</span> Download PDF';
-                showNotification('✓ PDF downloaded successfully!');
-            })
-            .catch((error) => {
-                console.error('PDF generation error:', error);
-                btnDownload.disabled = false;
-                btnDownload.innerHTML = '<span class="btn-icon">⬇</span> Download PDF';
-                alert('❗ Error generating PDF. Please try again.');
-            });
-
-    } catch (error) {
-        console.error('Download error:', error);
-        alert('❗ An error occurred while downloading the PDF.');
-        btnDownload.disabled = false;
-        btnDownload.innerHTML = '<span class="btn-icon">⬇</span> Download PDF';
+// Download CSV Action Logic
+btnDownloadCsv.addEventListener('click', function() {
+    if (invoiceItems.length === 0) {
+        alert('Please generate an invoice first.');
+        return;
     }
-}
+    const csvRows = [];
+    const headers = ['Date', 'Item Description', 'Quantity', 'Rate (PKR)', 'Amount (PKR)'];
+    csvRows.push(headers.join(','));
 
-// ============================================
-// CSV DOWNLOAD
-// ============================================
+    const invoiceDate = formatDate(document.getElementById('input-date').value);
 
-btnDownloadCsv.addEventListener('click', downloadCSV);
+    invoiceItems.forEach(item => {
+        // Escaped description with quotes to preserve spacing or characters smoothly in CSV
+        const data = [
+            invoiceDate,
+            `"${item.item}"`,
+            item.quantity,
+            item.rate.toFixed(0), 
+            item.amount.toFixed(0) 
+        ];
+        csvRows.push(data.join(','));
+    });
 
-function downloadCSV() {
-    try {
-        if (invoiceItems.length === 0) {
-            alert('❗ No invoice to download. Please generate one first.');
-            return;
-        }
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `Invoice_${document.getElementById('inv-date').innerText.replace(/\//g, '-')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});
 
-        const csvRows = [];
-        
-        // Add header
-        const headers = ['Date', 'Item Description', 'Quantity', 'Rate (PKR)', 'Amount (PKR)'];
-        csvRows.push(headers.map(h => `"${h}"`).join(','));
-
-        // Add items
-        invoiceItems.forEach(item => {
-            const row = [
-                `"${currentInvoiceDate}"`,
-                `"${item.item.replace(/"/g, '""')}"`, // Escape quotes in CSV
-                item.quantity.toString(),
-                item.rate.toFixed(2),
-                item.amount.toFixed(2)
-            ];
-            csvRows.push(row.join(','));
-        });
-
-        // Add total row
-        const totalAmount = invoiceItems.reduce((sum, item) => sum + item.amount, 0);
-        csvRows.push(['', '', '', 'TOTAL', totalAmount.toFixed(2)]);
-
-        const csvContent = csvRows.join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', `Invoice_${sanitizeFilename(currentInvoiceDate)}.csv`);
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        showNotification('✓ CSV downloaded successfully!');
-
-    } catch (error) {
-        console.error('CSV download error:', error);
-        alert('❗ Error downloading CSV. Please try again.');
-    }
-}
-
-// ============================================
-// RESET / MENU BUTTON
-// ============================================
-
-btnMenu.addEventListener('click', returnToMenu);
-
-function returnToMenu() {
-    // Reset form
+// Reset Menu Loop Logic
+btnMenu.addEventListener('click', function() {
     invoiceForm.reset();
-    setDefaultDate();
-    
-    // Clear items
-    itemInputsContainer.innerHTML = '';
-    invoiceItems = [];
-    currentInvoiceDate = '';
-    
-    // Add one empty item row
-    addItemRow();
-    
-    // Update visibility
+    itemInputsContainer.innerHTML = ''; // Clear all dynamic item rows
+    addItemRow(); // Add back one empty item row
     formContainer.classList.remove('hidden');
     actionButtons.classList.add('hidden');
     invoiceWrapper.classList.add('hidden');
-    
-    // Reset buttons
-    btnDownload.disabled = false;
-    btnDownloadCsv.disabled = false;
-    btnDownload.innerHTML = '<span class="btn-icon">⬇</span> Download PDF';
-    
-    // Scroll to top
-    formContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// ============================================
-// UTILITY FUNCTIONS
-// ============================================
-
-/**
- * Show a temporary notification
- */
-function showNotification(message) {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.textContent = message;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: linear-gradient(135deg, #90ee90 0%, #32cd32 100%);
-        color: white;
-        padding: 16px 24px;
-        border-radius: 8px;
-        font-weight: 600;
-        box-shadow: 0 4px 15px rgba(50, 205, 50, 0.4);
-        z-index: 9999;
-        animation: slideInUp 0.3s ease-out;
-        max-width: 300px;
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Remove after 3 seconds
-    setTimeout(() => {
-        notification.style.animation = 'slideInUp 0.3s ease-out reverse';
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
-    }, 3000);
-}
-
-// ============================================
-// KEYBOARD SHORTCUTS
-// ============================================
-
-document.addEventListener('keydown', function(e) {
-    // Ctrl/Cmd + Enter to submit form
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        if (!formContainer.classList.contains('hidden')) {
-            invoiceForm.dispatchEvent(new Event('submit'));
-        }
-    }
-    
-    // Escape to return to menu
-    if (e.key === 'Escape' && !actionButtons.classList.contains('hidden')) {
-        returnToMenu();
-    }
+    invoiceItems = []; // Clear stored data
 });
 
-// ============================================
-// CONSOLE MESSAGE
-// ============================================
+// Helper Function for parsing generic HTML Date components cleanly
+function formatDate(dateString) {
+    if(!dateString) return "";
+    const parts = dateString.split('-');
+    return `${parts[1]}/${parts[2]}/${parts[0]}`;
+}
 
-console.log('%cInvoice Generator Loaded! 📄', 'font-size: 16px; color: #6495ed; font-weight: bold;');
-console.log('%cVersion: 2.0 - Mobile Optimized', 'color: #ff69b4;');
+// FORCE ONE ROW TO APPEAR IMMEDIATELY ON LOAD
+addItemRow();
