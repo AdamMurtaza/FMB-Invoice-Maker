@@ -525,6 +525,7 @@ body {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 40px;
+    table-layout: fixed;
 }
 
 .invoice-table th,
@@ -533,6 +534,8 @@ body {
     padding: 10px;
     font-size: 10pt;
     vertical-align: middle;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .invoice-table th {
@@ -763,22 +766,30 @@ body {
    PRINT STYLES
    ============================================ */
 
+#invoice-capture {
+    background-color: #ffffff !important;
+}
+
 @media print {
     body {
-        background: white;
-        padding: 0;
+        background: white !important;
+        padding: 0 !important;
     }
 
     .background-animation,
-    .card:not(#invoice-wrapper),
+    .card,
+    .preview-header,
     .btn,
     .form-actions {
         display: none !important;
     }
 
     .invoice-box {
-        box-shadow: none;
-        border-left: 5px solid #ff1493;
-        page-break-after: avoid;
+        transform: none !important;
+        box-shadow: none !important;
+        border-left: 5px solid #ff1493 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
     }
 }
