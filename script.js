@@ -1,166 +1,162 @@
-// Dom Element Elements
-const invoiceForm = document.getElementById('invoice-form');
-const formContainer = document.getElementById('form-container');
-const actionButtons = document.getElementById('action-buttons');
-const invoiceWrapper = document.getElementById('invoice-wrapper');
-const itemInputsContainer = document.getElementById('item-inputs-container');
-const addItemBtn = document.getElementById('add-item-btn');
+document.addEventListener('DOMContentLoaded', () => {
+    const itemContainer = document.getElementById('item-inputs-container');
+    const addItemBtn = document.getElementById('add-item-btn');
+    const invoiceForm = document.getElementById('invoice-form');
+    const dateInput = document.getElementById('input-date');
 
-// PDF & CSV Button Event Listeners
-const btnDownload = document.getElementById('btn-download');
-const btnDownloadCsv = document.getElementById('btn-download-csv');
-const btnMenu = document.getElementById('btn-menu');
+    const formContainer = document.getElementById('form-container');
+    const actionButtons = document.getElementById('action-buttons');
+    const invoiceWrapper = document.getElementById('invoice-wrapper');
 
-let invoiceItems = []; // Store multiple items
+    const btnDownload = document.getElementById('btn-download');
+    const btnDownloadCsv = document.getElementById('btn-download-csv');
+    const btnMenu = document.getElementById('btn-menu');
 
-addItemBtn.addEventListener('click', addItemRow);
+    let itemCount = 0;
 
-function addItemRow() {
-    const itemRowDiv = document.createElement('div');
-    itemRowDiv.classList.add('item-row');
-    itemRowDiv.innerHTML = `
-        <div class="form-group">
-            <label>Item Description:</label>
-            <input type="text" class="input-item" placeholder="e.g., Web Development Services" required>
-        </div>
-        <div class="form-group">
-            <label>Quantity:</label>
-            <input type="number" class="input-qty" min="1" step="any" placeholder="0" required>
-        </div>
-        <div class="form-group">
-            <label>Rate (PKR):</label>
-            <input type="number" class="input-rate" min="0" step="any" placeholder="0" required>
-        </div>
-        <button type="button" class="btn-remove-item">Remove</button>
-    `;
-    itemInputsContainer.appendChild(itemRowDiv);
+    // 1. Set Default Date to Today
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
 
-    itemRowDiv.querySelector('.btn-remove-item').addEventListener('click', function() {
-        // Ensure at least one row always remains
-        if (document.querySelectorAll('.item-row').length > 1) {
-            itemInputsContainer.removeChild(itemRowDiv);
-        } else {
-            alert("An invoice must have at least one item.");
-        }
-    });
-}
+    // Add initial item input row
+    addItemRow();
 
-// Form Submitting Engine
-invoiceForm.addEventListener('submit', function(e) {
-    e.preventDefault(); // Stop standard page refreshing
+    addItemBtn.addEventListener('click', () => addItemRow());
 
-    invoiceItems = [];
-    let totalAmount = 0;
-
-    const itemRows = document.querySelectorAll('.item-row');
-    itemRows.forEach(row => {
-        const itemVal = row.querySelector('.input-item').value;
-        const qtyVal = parseFloat(row.querySelector('.input-qty').value);
-        const rateVal = parseFloat(row.querySelector('.input-rate').value);
-
-        const calculatedAmount = qtyVal * rateVal;
-        totalAmount += calculatedAmount;
-
-        invoiceItems.push({
-            item: itemVal,
-            quantity: qtyVal,
-            rate: rateVal,
-            amount: calculatedAmount
-        });
-    });
-
-    // Inject data inside preview spreadsheet slots
-    document.getElementById('inv-date').innerText = formatDate(document.getElementById('input-date').value);
-
-    const invoiceTableBody = document.getElementById('invoice-table-body');
-    invoiceTableBody.innerHTML = ''; // Clear previous items
-
-    invoiceItems.forEach(item => {
-        const row = invoiceTableBody.insertRow();
+    function addItemRow() {
+        itemCount++;
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.id = `item-row-${itemCount}`;
         row.innerHTML = `
-            <td class="text-left col-desc">${item.item}</td>
-            <td class="text-center col-qty">${item.quantity}</td>
-            <td class="text-right col-rate">${'PKR ' + item.rate.toLocaleString('en-PK', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>
-            <td class="text-right font-bold col-amount">${'PKR ' + item.amount.toLocaleString('en-PK', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</td>
+            <div class="item-row-header">
+                <strong>Item #${itemCount}</strong>
+                ${itemCount > 1 ? `<button type="button" class="btn-remove-item" onclick="removeItemRow('item-row-${itemCount}')">Delete</button>` : ''}
+            </div>
+            <div class="form-group" style="margin-bottom:8px;">
+                <input type="text" class="item-desc" placeholder="Item description / details" required>
+            </div>
+            <div class="item-row-grid">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Qty</label>
+                    <input type="number" class="item-qty" min="1" value="1" required>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Rate</label>
+                    <input type="number" class="item-rate" min="0" step="0.01" placeholder="0.00" required>
+                </div>
+            </div>
         `;
-    });
+        itemContainer.appendChild(row);
+    }
 
-    document.getElementById('inv-total').innerText = 'PKR ' + totalAmount.toLocaleString('en-PK', {minimumFractionDigits: 0, maximumFractionDigits: 0});
-
-    // Adjust visibility screens
-    formContainer.classList.add('hidden');
-    actionButtons.classList.remove('hidden');
-    invoiceWrapper.classList.remove('hidden');
-});
-
-// Download PDF Action Logic
-btnDownload.addEventListener('click', function() {
-    const element = document.getElementById('invoice-capture');
-
-    // Fixed pixelation with scale: 3 and handled page breaks explicitly to prevent the second blank page
-    const options = {
-        margin:       0,
-        filename:     `Invoice_${document.getElementById('inv-date').innerText.replace(/\//g, '-')}.pdf`,
-        image:        { type: 'jpeg', quality: 1.0 },
-        html2canvas:  { scale: 3, useCORS: true, logging: false },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['avoid-all', 'css'] }
+    window.removeItemRow = function(rowId) {
+        const row = document.getElementById(rowId);
+        if (row) row.remove();
     };
 
-    html2pdf().set(options).from(element).save();
-});
-
-// Download CSV Action Logic
-btnDownloadCsv.addEventListener('click', function() {
-    if (invoiceItems.length === 0) {
-        alert('Please generate an invoice first.');
-        return;
+    // 2. Fixed Date Formatting Logic
+    function formatDateString(rawDateStr) {
+        if (!rawDateStr) return '';
+        // Handles input type="date" value directly (YYYY-MM-DD)
+        const parts = rawDateStr.split('-');
+        if (parts.length === 3) {
+            const year = parts[0];
+            const month = parts[1];
+            const day = parts[2];
+            return `${day}/${month}/${year}`;
+        }
+        return rawDateStr;
     }
-    const csvRows = [];
-    const headers = ['Date', 'Item Description', 'Quantity', 'Rate (PKR)', 'Amount (PKR)'];
-    csvRows.push(headers.join(','));
 
-    const invoiceDate = formatDate(document.getElementById('input-date').value);
+    // 3. Form Submit -> Render Preview
+    invoiceForm.addEventListener('submit', (e) => {
+        e.preventDefault();
 
-    invoiceItems.forEach(item => {
-        // Escaped description with quotes to preserve spacing or characters smoothly in CSV
-        const data = [
-            invoiceDate,
-            `"${item.item}"`,
-            item.quantity,
-            item.rate.toFixed(0), 
-            item.amount.toFixed(0) 
-        ];
-        csvRows.push(data.join(','));
+        // Fix & update Date
+        const rawDate = dateInput.value;
+        document.getElementById('inv-date').innerText = formatDateString(rawDate);
+
+        // Gather Items
+        const tableBody = document.getElementById('invoice-table-body');
+        tableBody.innerHTML = '';
+
+        let grandTotal = 0;
+        const rows = itemContainer.querySelectorAll('.item-row');
+
+        rows.forEach(row => {
+            const desc = row.querySelector('.item-desc').value;
+            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+            const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
+            const amount = qty * rate;
+
+            grandTotal += amount;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="col-desc">${desc}</td>
+                <td class="col-qty text-center">${qty}</td>
+                <td class="col-rate text-right">${rate.toFixed(2)}</td>
+                <td class="col-amount text-right">${amount.toFixed(2)}</td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+        document.getElementById('inv-total').innerText = grandTotal.toFixed(2);
+
+        // UI View Switch
+        formContainer.classList.add('hidden');
+        actionButtons.classList.remove('hidden');
+        invoiceWrapper.classList.remove('hidden');
+
+        // Scroll to action controls
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    const csvString = csvRows.join('\n');
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', `Invoice_${document.getElementById('inv-date').innerText.replace(/\//g, '-')}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // 4. Return to Menu
+    btnMenu.addEventListener('click', () => {
+        invoiceWrapper.classList.add('hidden');
+        actionButtons.classList.add('hidden');
+        formContainer.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // 5. Download PDF
+    btnDownload.addEventListener('click', () => {
+        const element = document.getElementById('invoice-capture');
+        const opt = {
+            margin:       0,
+            filename:     `Invoice_${dateInput.value}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save();
+    });
+
+    // 6. Download CSV
+    btnDownloadCsv.addEventListener('click', () => {
+        const rows = itemContainer.querySelectorAll('.item-row');
+        let csvContent = "data:text/csv;charset=utf-8,Description,Quantity,Rate,Amount\n";
+
+        rows.forEach(row => {
+            const desc = `"${row.querySelector('.item-desc').value.replace(/"/g, '""')}"`;
+            const qty = row.querySelector('.item-qty').value;
+            const rate = row.querySelector('.item-rate').value;
+            const amount = (parseFloat(qty) * parseFloat(rate)).toFixed(2);
+            csvContent += `${desc},${qty},${rate},${amount}\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `Invoice_${dateInput.value}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
 });
-
-// Reset Menu Loop Logic
-btnMenu.addEventListener('click', function() {
-    invoiceForm.reset();
-    itemInputsContainer.innerHTML = ''; // Clear all dynamic item rows
-    addItemRow(); // Add back one empty item row
-    formContainer.classList.remove('hidden');
-    actionButtons.classList.add('hidden');
-    invoiceWrapper.classList.add('hidden');
-    invoiceItems = []; // Clear stored data
-});
-
-// Helper Function for parsing generic HTML Date components cleanly
-function formatDate(dateString) {
-    if(!dateString) return "";
-    const parts = dateString.split('-');
-    return `${parts[1]}/${parts[2]}/${parts[0]}`;
-}
-
-// FORCE ONE ROW TO APPEAR IMMEDIATELY ON LOAD
-addItemRow();
